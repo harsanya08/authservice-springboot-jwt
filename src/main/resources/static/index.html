@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWTGuard AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 25px 40px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 8px 0 0;
+            color: #cbd5e1;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+        }
+
+        .risk {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .recommendation {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .reason {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .low {
+            color: #15803d;
+        }
+
+        .medium {
+            color: #ca8a04;
+        }
+
+        .high {
+            color: #dc2626;
+        }
+
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 700px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>🛡️ JWTGuard AI</h1>
+    <p>AI-Powered API Security Assistant</p>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Analyze Security Event</h2>
+
+        <div class="grid">
+
+            <div>
+                <label>IP Address</label>
+                <input id="ipAddress" value="192.168.1.100">
+            </div>
+
+            <div>
+                <label>Endpoint</label>
+                <input id="endpoint" value="/api/admin/users">
+            </div>
+
+            <div>
+                <label>HTTP Method</label>
+                <select id="method">
+                    <option>GET</option>
+                    <option selected>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                </select>
+            </div>
+
+            <div>
+                <label>User Role</label>
+                <select id="userRole">
+                    <option selected>USER</option>
+                    <option>ADMIN</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Failed Attempts</label>
+                <input id="failedAttempts" type="number" value="8">
+            </div>
+
+            <div>
+                <label>Requests Per Minute</label>
+                <input id="requestsPerMinute" type="number" value="35">
+            </div>
+
+        </div>
+
+        <button onclick="analyzeSecurity()">🔍 Analyze Security Event</button>
+
+        <div id="error" class="error"></div>
+    </div>
+
+
+    <div id="result" class="card result">
+
+        <h2>Security Analysis</h2>
+
+        <div id="risk" class="risk"></div>
+
+        <div id="recommendation" class="recommendation"></div>
+
+        <div class="reason">
+            <strong>Analysis:</strong>
+            <p id="reason"></p>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    async function analyzeSecurity() {
+
+        const errorElement = document.getElementById("error");
+        const resultElement = document.getElementById("result");
+
+        errorElement.textContent = "";
+        resultElement.style.display = "none";
+
+        const securityEvent = {
+            ipAddress: document.getElementById("ipAddress").value,
+            endpoint: document.getElementById("endpoint").value,
+            method: document.getElementById("method").value,
+            failedAttempts: parseInt(
+                document.getElementById("failedAttempts").value
+            ),
+            requestsPerMinute: parseInt(
+                document.getElementById("requestsPerMinute").value
+            ),
+            userRole: document.getElementById("userRole").value
+        };
+
+        try {
+
+            const response = await fetch("/api/security/analyze", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(securityEvent)
+            });
+
+            if (!response.ok) {
+                throw new Error("Security API returned HTTP " + response.status);
+            }
+
+            const data = await response.json();
+
+            const riskElement = document.getElementById("risk");
+            const recommendationElement =
+                document.getElementById("recommendation");
+
+            riskElement.textContent =
+                "Risk Level: " + data.riskLevel;
+
+            recommendationElement.textContent =
+                "Recommendation: " + data.recommendation;
+
+            document.getElementById("reason").textContent =
+                data.reason;
+
+            riskElement.className =
+                "risk " + data.riskLevel.toLowerCase();
+
+            recommendationElement.className =
+                "recommendation " + data.riskLevel.toLowerCase();
+
+            resultElement.style.display = "block";
+
+        } catch (error) {
+
+            errorElement.textContent =
+                "Unable to analyze security event: " + error.message;
+        }
+    }
+
+</script>
+
+</body>
+</html>
